@@ -1,0 +1,26 @@
+{
+  "name": "FiremonPHP/storage",
+  "description": "This libs provides easy way to storage files on mongodb",
+  "minimum-stability": "dev",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Marcos Dantas",
+      "email": "marcos.adantas@hotmail.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "FiremonPHP\\Storage\\": "src/"
+    }
+  },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/FiremonPHP/Manager"
+    }
+  ],
+  "require": {
+    "FiremonPHP/manager": "dev-master"
+  }
+}
