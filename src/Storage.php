@@ -3,6 +3,7 @@ namespace FiremonPHP\Storage;
 
 
 use FiremonPHP\Manager\Configuration;
+use MongoDB\BSON\ObjectID;
 use MongoDB\Driver\Manager;
 
 class Storage
@@ -21,6 +22,7 @@ class Storage
     }
 
     /**
+     * This function accept multiple post files
      * @param array $files
      * @return array
      */
@@ -29,18 +31,42 @@ class Storage
         $files = new FileStorage($files);
         $results = [];
         foreach ($files as $fileName => $file) {
-            $results[] = $this->bucket->uploadFromStream($fileName, $file['data'], $file['metadata']);
+            $results[] = $this->bucket->uploadFromStream($fileName, $file['data'], ['metadata' => $file['metadata']]);
         }
         return $results;
     }
 
-    public function download()
+    /**
+     * @param array $filesId
+     * @return array
+     */
+    public function download(array $filesId)
     {
-
+        $files = [];
+        foreach ($filesId as $fileId) {
+            $stream = $this->bucket->openDownloadStream(
+              new ObjectID($fileId)
+            );
+            $files[] = [
+                'data' => $stream,
+                'metadata' => $this->bucket->getFileDocumentForStream($stream)
+            ];
+        }
+        return $files;
     }
 
-    public function delete()
+    /**
+     * @param array $filesId
+     * @return array
+     */
+    public function delete(array $filesId)
     {
-
+        $result = [];
+        foreach ($filesId as $fileId) {
+            $result[] = $this->bucket->delete(
+              new ObjectID($fileId)
+            );
+        }
+        return $result;
     }
 }

@@ -5,18 +5,24 @@ class FileStorage implements \Iterator
 {
     private $files = [];
 
+    const DEFAULT_FILE_TYPE = 'application/octet';
+
     public function __construct(array $files)
     {
         $this->storeInternal($files);
     }
 
-
-
     /**
+     * Store on internal attribute $files, files by type of data files
      * @param $files
      */
-    private function storeInternal($files)
+    private function storeInternal($files) : void
     {
+        if ($this->isSinglePostFile($files)) {
+            $this->bySinglePostFile($files);
+            return;
+        }
+
         if ($this->isMultiplePostFiles($files)) {
             $this->byMultiplePostFiles($files);
             return;
@@ -26,9 +32,10 @@ class FileStorage implements \Iterator
     }
 
     /**
+     * Set all files on correct indexes
      * @param array $dataFiles
      */
-    private function byMultipleDataString(array $dataFiles)
+    private function byMultipleDataString(array $dataFiles) : void
     {
         foreach ($dataFiles as $fileKey => $file) {
             $indexFile = $this->generateName();
@@ -46,7 +53,7 @@ class FileStorage implements \Iterator
     /**
      * @param array $files
      */
-    private function byMultiplePostFiles(array $files)
+    private function byMultiplePostFiles(array $files) : void
     {
         $countFiles = count($files['name']);
         for ($i = 0; $i < $countFiles; $i++) {
@@ -55,24 +62,47 @@ class FileStorage implements \Iterator
                 $indexFile,
                 $this->initStream($files['tmp_name'][$i]),
                 $files['name'][$i],
-                ['type' => $files['type'][$i] ?? 'application/octet-stream']
+                ['type' => $files['type'][$i] ?? self::DEFAULT_FILE_TYPE]
             );
         }
+    }
+
+    /**
+     * @param array $dataFile
+     */
+    private function bySinglePostFile(array $dataFile) : void
+    {
+        $indexFile = $this->generateName();
+        $this->setFilesAttributes(
+            $indexFile,
+            $this->initStream($dataFile['tmp_name']),
+            $dataFile['name'],
+            ['type' => $dataFile['type'] ?? self::DEFAULT_FILE_TYPE]
+        );
     }
 
     /**
      * @param array $file
      * @return bool
      */
-    private function isMultiplePostFiles(array $file)
+    private function isMultiplePostFiles(array $file) : bool
     {
-        return isset($file['name']) && count($file['name']) > 0;
+        return isset($file['name']) && is_array($file['name']);
+    }
+
+    /**
+     * @param array $file
+     * @return bool
+     */
+    private function isSinglePostFile(array $file) : bool
+    {
+        return isset($file['name']) && ! is_array($file['name']);
     }
 
     /**
      * @return string
      */
-    private function generateName()
+    private function generateName() : string
     {
         return md5(uniqid(rand(), true));
     }
@@ -93,7 +123,7 @@ class FileStorage implements \Iterator
      * @param $name
      * @param null $metadata
      */
-    private function setFilesAttributes($index, $data, $name, $metadata = null)
+    private function setFilesAttributes($index, $data, $name, $metadata = null) : void
     {
         $this->files[$index]['data'] = $data;
         $metadata = array_merge($metadata, ['name' => $name]);
